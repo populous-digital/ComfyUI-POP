@@ -58,8 +58,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
 
       - name: Upload Assets to Release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.REPO_ACCESS_TOKEN }}
-          file: release_assets/*
-          tag: ${{ env.tag }}
+        if: always()
+        run: |
+          if [ -n "$(ls -A release_assets)" ]; then
+            echo "Uploading release assets"
+            gh release upload ${{ env.tag }} release_assets/* --repo populous-digital/ComfyUI-POP --clobber
+          else
+            echo "No assets to upload"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
