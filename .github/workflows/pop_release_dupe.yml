@@ -1,0 +1,65 @@
+name: POP_ReleaseDirectorySync
+
+on:
+  workflow_dispatch:  # This section specifies the trigger for the workflow. 'workflow_dispatch' means it will only run when manually triggered by a user in the GitHub Actions interface.
+
+jobs:
+  pop_release_directory_sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Target Repo
+        uses: actions/checkout@v3
+        with:
+          repository: populous-digital/ComfyUI-POP
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Latest Release from Source Repo
+        id: get_release
+        run: |
+          latest_release=$(curl -s -H "Authorization: token ${{ secrets.REPO_ACCESS_TOKEN }}" \
+            https://api.github.com/repos/comfyanonymous/ComfyUI/releases/latest)
+          echo "Release info: $latest_release"
+          tag=$(echo $latest_release | jq -r .tag_name)
+          name=$(echo $latest_release | jq -r .name)
+          assets=$(echo $latest_release | jq -r '.assets[] | .browser_download_url')
+          echo "tag=$tag" >> $GITHUB_ENV
+          echo "name=$name" >> $GITHUB_ENV
+          echo "assets=$assets" >> $GITHUB_ENV
+
+      - name: Debug Release Assets URLs
+        run: |
+          echo "Release Assets URLs:"
+          echo "$assets"
+
+      - name: Create New Directory for Release
+        run: |
+          release_dir="./pop_standalone/src/${{ env.tag }}"
+          mkdir -p "$release_dir"
+          echo "Created directory: $release_dir"
+
+      - name: Download Release Assets to Directory
+        run: |
+          release_dir="./pop_standalone/src/${{ env.tag }}"
+          echo "$assets" | while read -r url; do
+            if [ -n "$url" ]; then
+              echo "Downloading $url"
+              wget -P "$release_dir" "$url" || echo "Failed to download $url"
+            fi
+          done
+
+      - name: Check Downloaded Files
+        run: |
+          release_dir="./pop_standalone/src/${{ env.tag }}"
+          echo "Downloaded files in $release_dir:"
+          ls -lh "$release_dir"
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add ./pop_standalone/src/${{ env.tag }}
+          git commit -m "Add new release assets for ${{ env.tag }}"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
