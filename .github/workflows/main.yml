@@ -1,0 +1,49 @@
+name: POP_ReleaseSync
+
+on:
+  workflow_dispatch:
+
+jobs:
+  pop_release_sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Target Repo
+        uses: actions/checkout@v3
+        with:
+          repository: https://github.com/populous-digital/ComfyUI-POP
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Latest Release from Source Repo
+        id: get_release
+        run: |
+          latest_release=$(curl -s -H "Authorization: token ${{ secrets.SOURCE_REPO_TOKEN }}" \
+            https://api.github.com/repos/comfyanonymous/ComfyUI/releases/latest)
+          echo "Release info: $latest_release"
+          echo "::set-output name=tag::$(echo $latest_release | jq -r .tag_name)"
+          echo "::set-output name=assets::$(echo $latest_release | jq -r '.assets[] | .browser_download_url')"
+
+      - name: Download Release Assets
+        run: |
+          mkdir release_assets
+          for url in ${{ steps.get_release.outputs.assets }}; do
+            wget -P release_assets "$url"
+          done
+
+      - name: Create New Release in Target Repo
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ steps.get_release.outputs.tag }}
+          release_name: ${{ steps.get_release.outputs.tag }}
+          body: 'Automated release copied from ComfyUI'
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Assets to Release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: release_assets/*
+          tag: ${{ steps.get_release.outputs.tag }}
