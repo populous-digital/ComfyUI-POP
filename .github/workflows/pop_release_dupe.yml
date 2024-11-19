@@ -17,7 +17,7 @@ jobs:
       - name: Get Latest Release from Source Repo
         id: get_release
         run: |
-          latest_release=$(curl -s -H "Authorization: token ${{ secrets.REPO_ACCESS_TOKEN }}" \
+          latest_release=$(curl -s -H "Authorization: token ${{ secrets.REPO_ACCESS_TOKEN_TWO }}" \
             https://api.github.com/repos/comfyanonymous/ComfyUI/releases/latest)
           echo "Release info: $latest_release"
           tag=$(echo $latest_release | jq -r .tag_name)
@@ -73,4 +73,4 @@ jobs:
           git commit -m "Add new release assets for ${{ env.tag }}"
           git push
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN_TWO }}
