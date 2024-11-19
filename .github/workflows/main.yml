@@ -11,27 +11,29 @@ jobs:
       - name: Checkout Target Repo
         uses: actions/checkout@v3  # This step checks out (downloads) the target repository so that the workflow can make changes to it. It uses the 'actions/checkout' action.
         with:
-          repository: populous-digital/ComfyUI-POP  # Specify the repository to check out. Replace 'yourusername/target-repo' with the actual name of your target repository.
+          repository: populous-digital/ComfyUI-POP  # Specify the correct repository to check out.
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get Latest Release from Source Repo
         id: get_release
         run: |
-          latest_release=$(curl -s -H "Authorization: token ${{ secrets.SOURCE_REPO_TOKEN }}" \
+          latest_release=$(curl -s -H "Authorization: token ${{ secrets.REPO_ACCESS_TOKEN }}" \
             https://api.github.com/repos/comfyanonymous/ComfyUI/releases/latest)
           echo "Release info: $latest_release"
-          echo "::set-output name=tag::$(echo $latest_release | jq -r .tag_name)"
-          echo "::set-output name=assets::$(echo $latest_release | jq -r '.assets[] | .browser_download_url')"
+          tag=$(echo $latest_release | jq -r .tag_name)
+          assets=$(echo $latest_release | jq -r '.assets[] | .browser_download_url')
+          echo "tag=$tag" >> $GITHUB_ENV
+          echo "assets=$assets" >> $GITHUB_ENV
 
       - name: Debug Release Assets URLs
         run: |
           echo "Release Assets URLs:"
-          echo "${{ steps.get_release.outputs.assets }}"
+          echo "$assets"
 
       - name: Download Release Assets
         run: |
           mkdir -p release_assets
-          echo "${{ steps.get_release.outputs.assets }}" | while read -r url; do
+          echo "$assets" | while read -r url; do
             if [ -n "$url" ]; then
               echo "Downloading $url"
               wget -P release_assets "$url" || echo "Failed to download $url"
@@ -47,17 +49,17 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ steps.get_release.outputs.tag }}
-          release_name: ${{ steps.get_release.outputs.tag }}
+          tag_name: ${{ env.tag }}
+          release_name: ${{ env.tag }}
           body: 'Automated release copied from ComfyUI'
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
 
       - name: Upload Assets to Release
         uses: svenstaro/upload-release-action@v2
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: ${{ secrets.REPO_ACCESS_TOKEN }}
           file: release_assets/*
-          tag: ${{ steps.get_release.outputs.tag }}
+          tag: ${{ env.tag }}
