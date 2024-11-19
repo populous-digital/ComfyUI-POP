@@ -54,6 +54,18 @@ jobs:
           echo "Downloaded files in $release_dir:"
           ls -lh "$release_dir"
 
+      - name: Install Git LFS
+        run: |
+          git lfs install
+          echo "GIT LFS INSTALLED"
+
+      - name: Track Large Files with Git LFS
+        run: |
+          release_dir="./pop_standalone/src/${{ env.tag }}"
+          git lfs track "*.7z"
+          git add .gitattributes
+          git add "$release_dir"/*.7z
+
       - name: Commit and Push Changes
         run: |
           git config --global user.name "github-actions"
