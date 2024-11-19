@@ -11,7 +11,7 @@ jobs:
       - name: Checkout Target Repo
         uses: actions/checkout@v3
         with:
-          repository: https://github.com/populous-digital/ComfyUI-POP
+          repository: populous-digital/ComfyUI-POP
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get Latest Release from Source Repo
