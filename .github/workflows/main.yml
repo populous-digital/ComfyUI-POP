@@ -11,7 +11,7 @@ jobs:
       - name: Checkout Target Repo
         uses: actions/checkout@v3  # This step checks out (downloads) the target repository so that the workflow can make changes to it. It uses the 'actions/checkout' action.
         with:
-          repository: yourusername/target-repo  # Specify the repository to check out. Replace 'yourusername/target-repo' with the actual name of your target repository.
+          repository: populous-digital/ComfyUI-POP  # Specify the repository to check out. Replace 'yourusername/target-repo' with the actual name of your target repository.
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get Latest Release from Source Repo
