@@ -39,7 +39,8 @@ jobs:
           body: 'Automated release copied from ComfyUI'
           draft: false
           prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Assets to Release
         uses: svenstaro/upload-release-action@v2
