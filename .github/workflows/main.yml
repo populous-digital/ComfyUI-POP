@@ -17,7 +17,7 @@ jobs:
       - name: Get Latest Release from Source Repo
         id: get_release
         run: |
-          latest_release=$(curl -s -H "Authorization: token ${{ secrets.SOURCE_REPO_TOKEN }}" \
+          latest_release=$(curl -s -H "Authorization: token ${{ secrets.REPO_ACCESS_TOKEN }}" \
             https://api.github.com/repos/comfyanonymous/ComfyUI/releases/latest)
           echo "Release info: $latest_release"
           echo "::set-output name=tag::$(echo $latest_release | jq -r .tag_name)"
@@ -40,7 +40,7 @@ jobs:
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
 
       - name: Upload Assets to Release
         uses: svenstaro/upload-release-action@v2
