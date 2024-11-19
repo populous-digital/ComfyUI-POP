@@ -25,7 +25,7 @@ jobs:
 
       - name: Download Release Assets
         run: |
-          mkdir release_assets
+          mkdir -p release_assets
           for url in ${{ steps.get_release.outputs.assets }}; do
             wget -P release_assets "$url"
           done
