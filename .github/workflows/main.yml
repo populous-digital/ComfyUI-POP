@@ -1,34 +1,47 @@
-name: POP_ReleaseSync
+name: Sync Releases
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # This section specifies the trigger for the workflow. 'workflow_dispatch' means it will only run when manually triggered by a user in the GitHub Actions interface.
 
 jobs:
-  pop_release_sync:
+  sync_release:  # This defines a job named 'sync_release' that will run on the 'ubuntu-latest' virtual machine, which is a pre-configured environment provided by GitHub Actions.
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Target Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3  # This step checks out (downloads) the target repository so that the workflow can make changes to it. It uses the 'actions/checkout' action.
         with:
-          repository: populous-digital/ComfyUI-POP
+          repository: yourusername/target-repo  # Specify the repository to check out. Replace 'yourusername/target-repo' with the actual name of your target repository.
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get Latest Release from Source Repo
         id: get_release
         run: |
-          latest_release=$(curl -s -H "Authorization: token ${{ secrets.REPO_ACCESS_TOKEN }}" \
+          latest_release=$(curl -s -H "Authorization: token ${{ secrets.SOURCE_REPO_TOKEN }}" \
             https://api.github.com/repos/comfyanonymous/ComfyUI/releases/latest)
           echo "Release info: $latest_release"
           echo "::set-output name=tag::$(echo $latest_release | jq -r .tag_name)"
           echo "::set-output name=assets::$(echo $latest_release | jq -r '.assets[] | .browser_download_url')"
 
+      - name: Debug Release Assets URLs
+        run: |
+          echo "Release Assets URLs:"
+          echo "${{ steps.get_release.outputs.assets }}"
+
       - name: Download Release Assets
         run: |
           mkdir -p release_assets
-          for url in ${{ steps.get_release.outputs.assets }}; do
-            wget -P release_assets "$url"
+          echo "${{ steps.get_release.outputs.assets }}" | while read -r url; do
+            if [ -n "$url" ]; then
+              echo "Downloading $url"
+              wget -P release_assets "$url" || echo "Failed to download $url"
+            fi
           done
+
+      - name: Check Downloaded Files
+        run: |
+          echo "Downloaded files:"
+          ls -lh release_assets
 
       - name: Create New Release in Target Repo
         id: create_release
@@ -40,7 +53,7 @@ jobs:
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Assets to Release
         uses: svenstaro/upload-release-action@v2
