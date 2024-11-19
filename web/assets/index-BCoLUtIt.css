@@ -4598,3 +4598,11 @@ audio.comfy-audio.empty-audio-widget {
 .pi-spinner:before {
     content: "\e926";
 }
+
+body {
+  background-image: url('./web/logo.svg'); /* Adjust the path as needed */
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  opacity: 0.1; /* Optional: Adjust for a subtle background */
+}
